@@ -3,91 +3,107 @@ require 'docile'
 
 class BuilderBuilder
   def initialize
-    @new_builder = Class.new {}
-    @required_fields    = []
-    @defaulted_fields   = {}
+    @required_fields = []
+    @defaulted_fields = {}
+    @optional_fields = []
   end
 
-  def required(*names)
-    return unless names
-    @required_fields += names
-    names.each {|name| _create_name_method name}
+  def all_fields
+    @required_fields + @defaulted_fields.keys + @optional_fields
   end
 
-  def defaulted(name, val)
-    @defaulted_fields["@#{name}"] = val
-    _create_name_method name
-  end
+  def required(*names);@required_fields += names if names;end
+  def defaulted(name, val);@defaulted_fields["@#{name}"] = val;end
+  def optional(*names);@optional_fields += names if names;end
 
-  def optional(*names)
-    names.each {|name| _create_name_method name}
-  end
+  # TODO: Refactor into smaller methods?
+  def builder_build build
+    builder = Class.new
+    class << builder
+      attr_accessor :reqs, :defaults, :builder
+    end
 
-  def build_builder
-    @new_builder.class_eval %Q{
+    all_fields.each {|field| _create_name_method builder, field}
+
+    builder.reqs = @required_fields
+    builder.defaults = @defaulted_fields
+    builder.builder = build
+
+    builder.class_eval do
       def isValid?
-        #{@required_fields.inspect}.each do |field|
-          return false if instance_variable_get("@\#{field}") == nil
+        self.class.reqs.each do |field|
+          return false if instance_variable_get("@#{field}") == nil
         end
         true
       end
 
-      def prebuild
+      def validate
         raise "Not all required fields are defined." unless self.isValid?
-        #{@defaulted_fields.inspect}.each do |name, val|
+        self.class.defaults.each do |name, val|
           if instance_variable_get(name) == nil
             instance_variable_set name, val
           end
         end
       end
-    }
 
-    @new_builder
+      def build
+        validate
+        instance_eval(&self.class.builder)
+      end
+    end
+
+    builder
   end
 
   private
- sd
-  def _create_name_method name
-    @new_builder.class_eval do
-      define_method(name) do |val|
-        instance_variable_set "@#{name}", val
+  def _create_name_method builder, name
+    builder.class_eval do
+      define_method(name) do |*val|
+        if val.length == 1
+          instance_variable_set "@#{name}", val[0]
+        else
+          instance_variable_set "@#{name}", val
+        end
       end
     end
   end
 end
 
+def builder(build=nil, &block)
+  build ||= Proc.new do
+    validate
+    Hash[instance_variables.map do |var|
+           [var[1..-1].to_sym, instance_variable_get(var)]
+         end]
+  end
+
+  Docile.dsl_eval(BuilderBuilder.new, &block).builder_build(build)
+end
+
+=begin
+# Tests that should be integrated into the spec
 bb = BuilderBuilder.new
 bb.required :needed
 bb.optional :opt1, :opt2
 bb.defaulted :three, 3
-TestBuilder = bb.build_builder
-
-class TestBuilder
-  def build
-    prebuild
+TestBuilder_ = bb.builder_build(Proc.new do
+    validate
     puts @needed, @opt1, @opt2, @three
-  end
-end
+end)
 
-testbuilder = TestBuilder.new
+testbuilder = TestBuilder_.new
 testbuilder.needed "Got needed"
 testbuilder.opt1 "Option 1"
 testbuilder.build
 
-def builder(&block)
-  Docile.dsl_eval(BuilderBuilder.new, &block).build_builder
+print_game_obj = Proc.new do
+    puts @short_desc, @qualities.inspect
 end
 
-GameObjectBuilder = builder do
+GameObjectBuilder = builder(print_game_obj) do
   required :short_desc, :qualities
   optional :long_desc, :smell
   defaulted :static, true
-end
-
-class GameObjectBuilder
-  def build
-    puts @short_desc, @qualities.inspect
-  end
 end
 
 def gameobj(&block)
@@ -98,3 +114,4 @@ wrench = gameobj do
   short_desc "It turns shit."
   qualities :holdable, :awesome
 end
+=end

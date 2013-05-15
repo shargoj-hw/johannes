@@ -3,15 +3,26 @@ require "gameobj.rb"
 describe 'game object creation' do
   specify 'create a simple object' do
     wrench_desc = "A rust-stained metal wrench."
-    wrench = object do
-      has_qualities :holdable, :throwable, :weapon
-      short_description wrench_desc
+    wrench = gameobj do
+      name :wrench
+      qualities :holdable, :throwable, :weapon
+      short_desc wrench_desc
     end
 
     [:holdable, :throwable, :weapon].each do |quality|
-      expect(wrench).to include quality
+      expect(wrench.is? quality).to be_true
     end
 
-    expect(wrench.short_description).to eq wrench_desc
+    expect(wrench.short_desc).to eq wrench_desc
+  end
+
+  specify 'objects are usually static' do
+    vault_door = gameobj do
+      name :vault_door
+      qualities :openable
+      short_desc "It looks really heavy."
+    end
+
+    vault_door.is_static?.should be_false
   end
 end
