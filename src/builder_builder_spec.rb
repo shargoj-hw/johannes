@@ -1,6 +1,6 @@
 require 'builder_builder.rb'
 
-describe 'building builders' do
+describe 'when building builders' do
   specify "a builder's default attributes are single objects" do
     build = Proc.new do
       validate
@@ -46,5 +46,18 @@ describe 'building builders' do
     defaulted = test {}
 
     expect(defaulted[:three]).to be(3)
+  end
+
+  specify 'a builder can have an optional value' do
+    TestOptionalBuilder = builder {optional :foo}
+    def test &block
+      Docile.dsl_eval(TestOptionalBuilder.new, &block).build
+    end
+
+    optional = test {}
+    optional_is_used = test {foo 5}
+
+    expect(optional[:foo]).to be(nil)
+    expect(optional_is_used[:foo]).to be(5)
   end
 end

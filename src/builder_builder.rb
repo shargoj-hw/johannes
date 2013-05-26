@@ -58,12 +58,8 @@ class BuilderBuilder
   private
   def _create_name_method builder, name
     builder.class_eval do
-      define_method(name) do |*val|
-        if val.length == 1
-          instance_variable_set "@#{name}", val[0]
-        else
-          instance_variable_set "@#{name}", val
-        end
+      define_method(name) do |val|
+        instance_variable_set "@#{name}", val
       end
     end
   end
