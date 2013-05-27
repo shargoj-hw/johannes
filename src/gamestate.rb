@@ -1,5 +1,4 @@
-class ItemNotFound < Exception
-end
+class ItemNotFound < Exception; end
 
 class GameState
   attr_reader :items, :rooms, :player
@@ -106,6 +105,14 @@ class GameState
   end
 end
 
+class Description
+  attr_reader :name, :short_desc, :long_desc
+
+  def initialize name, short_desc, long_desc
+    @name, @short_desc, @long_desc = name, short_desc, long_desc
+  end
+end
+
 class GameObject
   # Symbol name of this object
   attr_reader :name
@@ -149,7 +156,6 @@ class Item < GameObject
   end
 end
 
-# TODO: Override items to take into account containers
 class Room < GameObject
   # List of RoomReferences connected to this room
   attr_reader :connections
@@ -174,8 +180,8 @@ class Room < GameObject
 end
 
 class Player < GameObject
-  def initialize items
-    @items = items
+  def initialize name, items
+    super(name, items)
   end
 
   def new_with_items items

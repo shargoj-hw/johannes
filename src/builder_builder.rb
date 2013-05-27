@@ -6,31 +6,63 @@ class BuilderBuilder
     @required_fields = []
     @defaulted_fields = {}
     @optional_fields = []
+    @booleans = []
+    @accumulators = {}
   end
 
-  def all_fields
-    @required_fields + @defaulted_fields.keys + @optional_fields
+  def all_basic_fields
+    @required_fields + @defaulted_fields.keys + @optional_fields + @booleans
   end
 
   def required(*names);@required_fields += names if names;end
-  def defaulted(name, val);@defaulted_fields["@#{name}"] = val;end
+  def defaulted(name, val);@defaulted_fields[name] = val;end
   def optional(*names);@optional_fields += names if names;end
+  def boolean(*names);@booleans += names if names; end
+  def accumulates(builder_name, property)
+    @accumulators[builder_name] = "@#{property}"
+  end
 
   # TODO: Refactor into smaller methods?
   def builder_build build
     builder = Class.new
     class << builder
-      attr_accessor :reqs, :defaults, :builder
+      attr_accessor :reqs, :defaults, :builder, :booleans
     end
 
-    all_fields.each {|field| _create_name_method builder, field}
+    all_basic_fields.each {|field| _create_name_method builder, field}
+
+    @accumulators.each {|builder_name, property|
+      builder.class_eval do
+        define_method(builder_name) do |val|
+          current_value = (instance_variable_get property) || []
+          instance_variable_set property, (current_value.push val)
+        end
+      end
+    }
+
+    @booleans.each {|name|
+      builder.class_eval do
+        define_method(name) do
+          name
+        end
+      end
+    }
 
     builder.reqs = @required_fields
     builder.defaults = @defaulted_fields
+    builder.booleans = @booleans
     builder.builder = build
 
     builder.class_eval do
-      def isValid?
+      def is quality
+        instance_variable_set "@#{quality}", true
+      end
+
+      def isnt quality
+        instance_variable_set "@#{quality}", false
+      end
+
+      def is_valid?
         self.class.reqs.each do |field|
           return false if instance_variable_get("@#{field}") == nil
         end
@@ -38,10 +70,11 @@ class BuilderBuilder
       end
 
       def validate
-        raise "Not all required fields are defined." unless self.isValid?
+        raise "Not all required fields are defined." unless self.is_valid?
         self.class.defaults.each do |name, val|
-          if instance_variable_get(name) == nil
-            instance_variable_set name, val
+          prop_name = "@#{name}"
+          if instance_variable_get(prop_name) == nil
+            instance_variable_set prop_name, val
           end
         end
       end
