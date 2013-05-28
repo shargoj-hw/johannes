@@ -185,6 +185,6 @@ class Player < GameObject
   end
 
   def new_with_items items
-    Player.new items
+    Player.new @name, items
   end
 end

@@ -7,7 +7,7 @@ describe GameState do
     boulder = Item.new :boulder, nil, true
     bedroom = Room.new :bedroom, [:screw, :boulder], []
     hallway = Room.new :hallway, [], []
-    player = Player.new [:wrench]
+    player = Player.new :jack, [:wrench]
 
     GameState.new [wrench, screw], [bedroom, hallway], :bedroom, player
   end
