@@ -4,10 +4,12 @@ require 'docile'
 class BuilderBuilder
   def initialize
     @required_fields = []
+    @required_dsl = {}
     @defaulted_fields = {}
     @optional_fields = []
     @booleans = []
     @accumulators = {}
+    @dsl_accumulators = {}
   end
 
   def all_basic_fields
@@ -15,11 +17,16 @@ class BuilderBuilder
   end
 
   def required(*names);@required_fields += names if names;end
+  def required_dsl(name, method); @required_dsl[name] = method; end
   def defaulted(name, val);@defaulted_fields[name] = val;end
   def optional(*names);@optional_fields += names if names;end
   def boolean(*names);@booleans += names if names; end
   def accumulates(builder_name, property)
     @accumulators[builder_name] = "@#{property}"
+  end
+
+  def accumulates_dsl(builder_name, property, method)
+    @dsl_accumulators[builder_name] = ["@#{property}", method]
   end
 
   # TODO: Refactor into smaller methods?
@@ -31,6 +38,14 @@ class BuilderBuilder
 
     all_basic_fields.each {|field| _create_name_method builder, field}
 
+    @required_dsl.each do |name, method|
+      builder.class_eval do
+        define_method(name) do |&block|
+          instance_variable_set "@#{name}", (method.call(&block))
+        end
+      end
+    end
+
     @accumulators.each {|builder_name, property|
       builder.class_eval do
         define_method(builder_name) do |val|
@@ -40,17 +55,27 @@ class BuilderBuilder
       end
     }
 
-    @booleans.each {|name|
+    @dsl_accumulators.each do |name, prop_meth|
+      property, method = prop_meth
+
+      builder.class_eval do
+        define_method(name) do |&block|
+          current_value = (instance_variable_get property) || []
+          instance_variable_set property, (current_value.push(method.call(&block)))
+        end
+      end
+    end
+
+    @booleans.each do |name|
       builder.class_eval do
         define_method(name) do
           name
         end
       end
-    }
+    end
 
-    builder.reqs = @required_fields
+    builder.reqs = @required_fields + @required_dsl.keys
     builder.defaults = @defaulted_fields
-    builder.booleans = @booleans
     builder.builder = build
 
     builder.class_eval do
@@ -64,7 +89,10 @@ class BuilderBuilder
 
       def is_valid?
         self.class.reqs.each do |field|
-          return false if instance_variable_get("@#{field}") == nil
+          if instance_variable_get("@#{field}") == nil
+            puts "Required field @#{field} was not defined"
+            return false
+          end
         end
         true
       end

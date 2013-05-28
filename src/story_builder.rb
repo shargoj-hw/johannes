@@ -25,6 +25,16 @@ item_build = Proc.new do
   ItemData.new this_item, items, descs, comms
 end
 
+# These methods exist so that ItemBuilder can be recursive
+# and use commands
+def helper_item &block
+  item(&block)
+end
+
+def helper_command &block
+  command(&block)
+end
+
 ItemBuilder = builder(item_build) do
   required :name
   required :short_desc
@@ -33,13 +43,15 @@ ItemBuilder = builder(item_build) do
   boolean :static
   boolean :container
 
-  accumulates :contains, :items
-  accumulates :responds_to, :commands
+  accumulates_dsl :contains, :items, method(:helper_item)
+  accumulates_dsl :responds_to, :commands, method(:helper_command)
 end
 
 def item &block
   Docile.dsl_eval(ItemBuilder.new, &block).build
 end
+
+item_proc = method(:item)
 
 RoomData = Struct.new :room, :items, :descriptions, :commands
 room_build = Proc.new do
@@ -64,7 +76,7 @@ RoomBuilder = builder(room_build) do
 
   defaulted :connects_with, []
 
-  accumulates :has_item, :items
+  accumulates_dsl :has_item, :items, method(:item)
 end
 
 def room &block
@@ -93,7 +105,7 @@ PlayerBuilder = builder(player_build) do
   required :description
   required :starts_in
 
-  accumulates :has_item, :items
+  accumulates_dsl :has_item, :items, method(:item)
 end
 
 def player &block
@@ -143,10 +155,10 @@ story_build = Proc.new do
 end
 
 StoryBuilder = builder(story_build) do
-  required :has_player
+  required_dsl :has_player, method(:player)
 
-  accumulates :has_room, :rooms
-  accumulates :has_item, :items
+  accumulates_dsl :has_room, :rooms, method(:room)
+  accumulates_dsl :has_item, :items, method(:item)
 end
 
 def story &block
