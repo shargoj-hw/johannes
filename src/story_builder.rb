@@ -3,15 +3,20 @@ require "Docile"
 require "builder_builder.rb"
 require "gamestate.rb"
 
+def unpack_metadata data
+  items = data.reduce([]) {|items, itemdata| items+itemdata.items}
+  descs = data.reduce([]) {|descs, itemdata| descs+itemdata.descriptions}
+  comms = data.reduce([]) {|comms, itemdata| comms+itemdata.commands}
+
+  [items, descs, comms]
+end
 
 ItemData = Struct.new :item, :items, :descriptions, :commands
 
 item_build = Proc.new do
   @items ||= []
 
-  items = @items.reduce([]) {|items, itemdata| items+itemdata.items}
-  descs = @items.reduce([]) {|descs, itemdata| descs+itemdata.descriptions}
-  comms = @items.reduce([]) {|comms, itemdata| comms+itemdata.commands}
+  items, descs, comms = unpack_metadata @items
 
   contained_items = @items.map {|itemdata| itemdata.item.name}
   contained_items = (@container || contained_items) ? contained_items : nil
@@ -55,9 +60,7 @@ item_proc = method(:item)
 
 RoomData = Struct.new :room, :items, :descriptions, :commands
 room_build = Proc.new do
-  items = @items.reduce([]) {|items, itemdata| items+itemdata.items}
-  descs = @items.reduce([]) {|descs, itemdata| descs+itemdata.descriptions}
-  comms = @items.reduce([]) {|comms, itemdata| comms+itemdata.commands}
+  items, descs, comms = unpack_metadata @items
 
   room_desc = Description.new @name, @short_desc, @long_desc
   descs << room_desc
@@ -87,9 +90,7 @@ PlayerData = Struct.new :player, :room, :items, :descriptions, :commands
 player_build = Proc.new do
   @items ||= []
 
-  items = @items.reduce([]) {|items, itemdata| items+itemdata.items}
-  descs = @items.reduce([]) {|descs, itemdata| descs+itemdata.descriptions}
-  comms = @items.reduce([]) {|comms, itemdata| comms+itemdata.commands}
+  items, descs, comms = unpack_metadata @items
 
   player_desc = Description.new @name, @description, @description
   descs << player_desc
@@ -132,24 +133,14 @@ end
 StoryData = Struct.new(:initial_gamestate, :items, :descriptions, :commands)
 
 story_build = Proc.new do
-  @player = @has_player
+  player = @has_player
   @items ||= []
   @rooms ||= []
 
-  items = @items.reduce([]) {|items, itemdata| items+itemdata.items}
-  descs = @items.reduce([]) {|descs, itemdata| descs+itemdata.descriptions}
-  comms = @items.reduce([]) {|comms, itemdata| comms+itemdata.commands}
-
-  items += @rooms.reduce([]) {|items, roomdata| items+roomdata.items}
-  descs += @rooms.reduce([]) {|descs, roomdata| descs+roomdata.descriptions}
-  comms += @rooms.reduce([]) {|comms, roomdata| comms+roomdata.commands}
-
-  items += @player.items
-  descs += @player.descriptions
-  comms += @player.commands
+  items, descs, comms = unpack_metadata(@items+@rooms+[player])
 
   initial_rooms = @rooms.map {|roomdata| roomdata.room}
-  start_gamestate = GameState.new items, initial_rooms, @player.room, @player.player
+  start_gamestate = GameState.new items, initial_rooms, player.room, player.player
 
   StoryData.new start_gamestate, items, descs, comms
 end
