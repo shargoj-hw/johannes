@@ -2,6 +2,7 @@ require "rubygems"
 require "Docile"
 require "builder_builder.rb"
 require "gamestate.rb"
+require "command.rb"
 
 def unpack_metadata data
   items = data.reduce([]) {|items, itemdata| items+itemdata.items}
@@ -14,9 +15,7 @@ end
 ItemData = Struct.new :item, :items, :descriptions, :commands
 
 item_build = Proc.new do
-  @items ||= []
-
-  items, descs, comms = unpack_metadata @items
+  items, descs, comms = unpack_metadata(@items+@commands)
 
   contained_items = @items.map {|itemdata| itemdata.item.name}
   contained_items = (@container || contained_items) ? contained_items : nil
@@ -25,7 +24,6 @@ item_build = Proc.new do
 
   items << this_item
   descs << (Description.new @name, @short_desc, @long_desc)
-  comms.concat @commands if @commands
 
   ItemData.new this_item, items, descs, comms
 end
@@ -88,8 +86,6 @@ end
 
 PlayerData = Struct.new :player, :room, :items, :descriptions, :commands
 player_build = Proc.new do
-  @items ||= []
-
   items, descs, comms = unpack_metadata @items
 
   player_desc = Description.new @name, @description, @description
@@ -113,18 +109,25 @@ def player &block
   Docile.dsl_eval(PlayerBuilder.new, &block).build
 end
 
-class CommandBuilder
-  def method_missing meth, *args, &block
-  end
+CommandData = Struct.new :command, :items, :descriptions, :commands
+command_build = proc do
+  command = Command.new @verbs, @tells_player
 
-  def verbs n
-    @name = (n.first.to_str+"_COMMAND").to_s
-  end
+  (@requires_and_destroys + @requires).each {|req| command.requires req}
+  (@requires_and_destroys + @destroys).each {|req| command.destroys req}
 
-  def build
-    @name
-  end
+  command.moves_player_to @moves_player_to if @moves_player_to
+  command.creates_connection @creates_connection
+
+  ((@items.map(&:item)).map(&:name)).each {|item| command.gives_player item}
+
+  items, descs, comms = unpack_metadata @items
+
+  comms << command
+
+  CommandData.new command, items, descs, comms
 end
+
 
 def command &block
   Docile.dsl_eval(CommandBuilder.new, &block).build
@@ -134,8 +137,6 @@ StoryData = Struct.new(:initial_gamestate, :items, :descriptions, :commands)
 
 story_build = Proc.new do
   player = @has_player
-  @items ||= []
-  @rooms ||= []
 
   items, descs, comms = unpack_metadata(@items+@rooms+[player])
 

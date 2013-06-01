@@ -13,7 +13,7 @@ end
 LOCKEDIN = story do
   has_player do
     name :Jude
-    description "I'm a simple girl in this sample world!"
+    description "I'm a sample girl in this sample world!"
 
     starts_in :bedroom
 
@@ -45,10 +45,12 @@ LOCKEDIN = story do
       is static
 
       responds_to do
-        verbs %w(alchemize combine use)
-        takes_and_destroys :necronomicon
-        takes_and_destroys :metal_chunk
-        gives_player do
+        command_verbs verbs %w(alchemize combine use)
+        requires :necronomicon, :metal_chunk
+
+        removes_from_player :necronomicon
+        removes_from_player :metal_chunk
+        gives_to_player do
           name :skeleton_key
           short_desc "haunted looking key"
           isnt static
@@ -79,10 +81,13 @@ LOCKEDIN = story do
       is static
 
       responds_to do
-        verbs %w(open unlock)
-        takes_and_destroys :skeleton_key
-        destroys :locked_door
-        creates_exit :hallway
+        command_verbs verbs %w(open unlock)
+        requires :skeleton_key
+
+        removes_from_room :locked_door
+        creates_connection [:bedroom, :hallway]
+
+        tells_player "I opened the door."
       end
     end
   end
@@ -92,3 +97,4 @@ gs = LOCKEDIN.initial_gamestate
 descs = {}
 LOCKEDIN.descriptions.each {|d| descs[d.name]=d}
 gs.items.each {|i| puts "#{i.inspect}, #{descs[i.name].short_desc}"}
+LOCKEDIN.commands.each {|c| puts c.verbs.inspect}

@@ -21,7 +21,8 @@ class BuilderBuilder
   def defaulted(name, val);@defaulted_fields[name] = val;end
   def optional(*names);@optional_fields += names if names;end
   def boolean(*names);@booleans += names if names; end
-  def accumulates(builder_name, property)
+  def accumulates(builder_name, property=nil)
+    property ||= builder_name
     @accumulators[builder_name] = "@#{property}"
   end
 
@@ -33,7 +34,7 @@ class BuilderBuilder
   def builder_build build
     builder = Class.new
     class << builder
-      attr_accessor :reqs, :defaults, :builder, :booleans
+      attr_accessor :reqs, :defaults, :builder, :booleans, :accumulated
     end
 
     all_basic_fields.each {|field| _create_name_method builder, field}
@@ -49,7 +50,7 @@ class BuilderBuilder
     @accumulators.each {|builder_name, property|
       builder.class_eval do
         define_method(builder_name) do |val|
-          current_value = (instance_variable_get property) || []
+          current_value = (instance_variable_get property)
           instance_variable_set property, (current_value.push val)
         end
       end
@@ -60,7 +61,7 @@ class BuilderBuilder
 
       builder.class_eval do
         define_method(name) do |&block|
-          current_value = (instance_variable_get property) || []
+          current_value = (instance_variable_get property)
           instance_variable_set property, (current_value.push(method.call(&block)))
         end
       end
@@ -76,9 +77,16 @@ class BuilderBuilder
 
     builder.reqs = @required_fields + @required_dsl.keys
     builder.defaults = @defaulted_fields
+    builder.accumulated = (@accumulators.values + @dsl_accumulators.values).map(&:first)
     builder.builder = build
 
     builder.class_eval do
+      def initialize
+        self.class.accumulated.each do |accumulated|
+          instance_variable_set accumulated, []
+        end
+      end
+
       def is quality
         instance_variable_set "@#{quality}", true
       end
