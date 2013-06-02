@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'extensions/all'
 
 require_relative 'gamestate'
 
@@ -60,7 +59,9 @@ class Command
 
   def can_run? gamestate
     has_response = !@on_success.nil?
-    requirements_met = @requirements.all? {|req| gamestate.player.items.includes? req}
+    requirements_met = @requirements.all? {|req|
+      gamestate.player.items.include? req
+    }
 
     has_response && requirements_met
   end
@@ -69,7 +70,7 @@ class Command
     raise CommandCantRun unless can_run? gs
 
     gs = @creates_connections.reduce(gs) {|state, item|
-      state.creates_connections(*item)
+      state.create_connections(*item)
     }
 
     gs = @player_adds.reduce(gs) {|state, item|

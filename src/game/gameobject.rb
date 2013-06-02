@@ -24,4 +24,12 @@ class GameObject
   def new_with_items items
     raise NotImplementedError
   end
+
+  def contains? item
+    if (!items.nil?)
+      (items.include? item)
+    else
+      false
+    end
+  end
 end

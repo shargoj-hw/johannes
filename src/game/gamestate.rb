@@ -31,7 +31,7 @@ class GameState
     player_with_item = player.add_items item
 
     if !from.nil?
-      if (self.item from).contains? item
+      if !(self.item from).contains?(item)
         raise "#{from} doesn't contain #{item}"
       end
 

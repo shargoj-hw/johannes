@@ -1,4 +1,5 @@
 require 'rubygems'
+
 require 'Docile'
 
 class BuilderBuilder
@@ -77,7 +78,7 @@ class BuilderBuilder
 
     builder.reqs = @required_fields + @required_dsl.keys
     builder.defaults = @defaulted_fields
-    builder.accumulated = (@accumulators.values + @dsl_accumulators.values).map(&:first)
+    builder.accumulated = (@accumulators.values + @dsl_accumulators.values.map(&:first))
     builder.builder = build
 
     builder.class_eval do

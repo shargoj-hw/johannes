@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'extensions/all'
 
 require_relative 'gameobject'
 

@@ -1,5 +1,4 @@
 require "rubygems"
-require 'extensions/all'
 require "Docile"
 
 require_relative "builder_builder"
