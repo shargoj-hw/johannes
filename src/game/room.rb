@@ -1,4 +1,7 @@
-require 'gameobject'
+require 'rubygems'
+require 'extensions/all'
+
+require_relative 'gameobject'
 
 class Room < GameObject
   # List of RoomReferences connected to this room

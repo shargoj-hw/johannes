@@ -1,4 +1,4 @@
-require "gamestate.rb"
+require 'gamestate'
 
 describe GameState do
   let(:game) do
@@ -62,25 +62,22 @@ describe GameState do
     end
   end
 
-  describe '.create' do
+  describe '.player_create' do
   end
 
-  describe '.destroy' do
-    context 'when the item exists locally' do
-      it 'should remove it from the player' do
-        (game.destroy :wrench).player.items.should_not include :wrench
-      end
+  describe '.room_create' do
+  end
 
-      it 'should remove it from the current room' do
-        (game.destroy :screw).current_room.items.should_not include :screw
-      end
-    end
+  describe '.container_create' do
+  end
 
-    context 'when it does not exist locally' do
-      it 'should raise an error' do
-        expect {game.destroy :pickle}.to raise_error(ItemNotFound)
-      end
-    end
+  describe '.player_destroy' do
+  end
+
+  describe '.room_destroy' do
+  end
+
+  describe '.container_destroy' do
   end
 
   describe '.create_connections' do

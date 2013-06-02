@@ -1,14 +1,4 @@
-require 'story_builder.rb'
-
-sample_item = item do
-  name :container
-  short_desc "has a foo"
-
-  contains do
-    name :foo
-    short_desc "this works!"
-  end
-end
+require 'story_builder'
 
 LOCKEDIN = story do
   has_player do
@@ -45,12 +35,12 @@ LOCKEDIN = story do
       is static
 
       responds_to do
-        command_verbs verbs %w(alchemize combine use)
+        command_verbs  %w(alchemize combine use)
         requires :necronomicon, :metal_chunk
 
         removes_from_player :necronomicon
         removes_from_player :metal_chunk
-        gives_to_player do
+        give_player do
           name :skeleton_key
           short_desc "haunted looking key"
           isnt static
@@ -81,9 +71,10 @@ LOCKEDIN = story do
       is static
 
       responds_to do
-        command_verbs verbs %w(open unlock)
+        command_verbs %w(open unlock)
         requires :skeleton_key
 
+        removes_from_player :skeleton_key
         removes_from_room :locked_door
         creates_connection [:bedroom, :hallway]
 
@@ -92,9 +83,3 @@ LOCKEDIN = story do
     end
   end
 end
-
-gs = LOCKEDIN.initial_gamestate
-descs = {}
-LOCKEDIN.descriptions.each {|d| descs[d.name]=d}
-gs.items.each {|i| puts "#{i.inspect}, #{descs[i.name].short_desc}"}
-LOCKEDIN.commands.each {|c| puts c.verbs.inspect}

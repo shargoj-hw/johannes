@@ -52,7 +52,6 @@ class GameState
     end
   end
 
-  # TODO: make this aware of containers
   def put item, into=nil
     raise ItemNotFound unless player.items.include? item
 
@@ -124,10 +123,10 @@ class GameState
 
   private
   def replace_room room
-    (rooms.select? {|r| r.name != room.name}) << room
+    (rooms.select {|r| r.name != room.name}) << room
   end
 
   def replace_item item
-    (items.select? {|i| i.name != item.name}) << item
+    (items.select {|i| i.name != item.name}) << item
   end
 end

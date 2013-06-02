@@ -1,4 +1,7 @@
-require 'gameobject'
+require 'rubygems'
+require 'extensions/all'
+
+require_relative 'gameobject'
 
 class Player < GameObject
   def initialize name, items

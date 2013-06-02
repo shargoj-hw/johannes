@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'docile'
+require 'Docile'
 
 class BuilderBuilder
   def initialize

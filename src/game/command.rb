@@ -1,8 +1,12 @@
-require 'gamestate'
+require 'rubygems'
+require 'extensions/all'
+
+require_relative 'gamestate'
 
 # TODO: Add real requirement system
 class Command
   attr_reader :verbs, :on_success
+
   def initialize
     @verbs = []
     @on_success = nil
@@ -36,14 +40,18 @@ class Command
   def creates_connection rooms; @creates_connections << rooms; end
 
   def gives_to_player item; @player_adds << item; end
-  def gives_to_room room, item; @room_adds[room] << item; end
-  def gives_to_container container, item
+  def gives_to_room item, room=:current_room
+    @room_adds[room] << item
+  end
+  def gives_to_container item, container
     @container_adds[container] = item
   end
 
   def removes_from_player item; @player_deletes << item; end
-  def removes_from_room room, item; @room_deletes[room] << item; end
-  def removes_from_container container, item
+  def removes_from_room item, room=:current_room
+    @room_deletes[room] << item
+  end
+  def removes_from_container item, container
     @container_deletes[container] << item
   end
 

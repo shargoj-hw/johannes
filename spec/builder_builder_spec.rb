@@ -1,4 +1,4 @@
-require 'builder_builder.rb'
+require 'builder_builder'
 
 describe 'when building builders' do
   specify "a builder's default attributes are single objects" do
@@ -79,7 +79,7 @@ describe 'when building builders' do
     end
 
     expect(accumulated[:pname]).to eq [1,2,3]
-    not_accumulated[:pname].should be_nil
+    not_accumulated[:pname].should eq []
   end
 
   specify 'a builder can have a boolean value' do
