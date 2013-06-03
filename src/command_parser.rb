@@ -26,7 +26,7 @@ end
 
 class CommandParser < Parslet::Parser
   rule(:item) {
-    match('[A-Za-z]').repeat(1)
+    match('[A-Za-z_]').repeat(1)
   }
 
   rule(:the) {spaced(stri("the"))}; rule(:the?) {the.maybe}
@@ -36,7 +36,7 @@ class CommandParser < Parslet::Parser
   }
   rule(:takeword) {any_of_stri TAKE_WORDS}
   rule(:take) {
-    spaced(takeword).as(:verb) >> the? >> item.as(:item) >>
+    spaced(takeword).as(:take) >> the? >> item.as(:item) >>
     from.maybe
   }
 
@@ -46,12 +46,12 @@ class CommandParser < Parslet::Parser
   }
   rule(:putword) {any_of_stri PUT_WORDS.map}
   rule(:put) {
-    spaced(putword).as(:verb) >> the? >> item.as(:item) >>
+    spaced(putword).as(:put) >> the? >> item.as(:item) >>
     into.maybe
   }
 
   rule(:move) {
-    spaced(any_of_stri MOVE_WORDS).as(:verb) >>
+    spaced(any_of_stri MOVE_WORDS).as(:move) >>
     spaced(any_of_stri ['into', 'in', 'to']).maybe >>
     the? >>
     item.as(:location)
@@ -72,4 +72,82 @@ class CommandParser < Parslet::Parser
   }
 
   root(:command)
+end
+
+# convert to a reasonable symbol for the gamestate
+def simplify o
+  o.to_s.downcase.strip.to_sym
+end
+
+class CommandTranslator < Parslet::Transform
+  # rule(:verb => simple(:x)) {x.to_s.downcase.strip}
+  # rule(:container => simple(:x)) {x.to_s.downcase.strip}
+  # rule(:location => simple(:x)) {x.to_s.downcase.strip}
+  # rule(:item => simple(:x)) {x.to_s.downcase.strip}
+  rule(:move => simple(:move), :location=>simple(:_location)) {
+    location = simplify _location
+
+    Proc.new do |state, commands|
+      state.move_player location
+    end
+  }
+
+  rule(:put => simple(:put), :item => simple(:_item)) {
+    item = simplify _item
+
+    Proc.new do |state, commands|
+      state.put item
+    end
+  }
+
+  rule(:put => simple(:put),
+       :item => simple(:_item),
+       :container => simple(:_container)) {
+    item = simplify _item
+    container = simplify _container
+
+    Proc.new do |state, commands|
+      state.put item, container
+    end
+  }
+
+  rule(:take => simple(:take), :item => simple(:_item)) {
+    item = simplify _item
+
+    Proc.new do |state, commands|
+      state.take item
+    end
+  }
+
+  rule(:take => simple(:take),
+       :item => simple(:_item),
+       :container => simple(:_container)) {
+    item = simplify _item
+    container = simplify _container
+    puts item, container
+
+    Proc.new do |state, commands|
+      state.take item, container
+    end
+  }
+
+  rule(:verb => simple(:_verb), :items=>subtree(:_items)) {
+    verb = simplify _verb
+    items = _items.map {|i| simplify i[:item]}
+
+    puts verb
+    puts items.inspect
+
+    Proc.new do |state, commands|
+      state
+    end
+  }
+end
+
+# (String | ParsedCommand) GameState [Command] -> GameState
+def run_command command, state, commands
+  command = CommandParser.new.parse command if command.is_a? String
+  command = CommandTranslator.new.apply(command)
+
+  command[state, commands]
 end

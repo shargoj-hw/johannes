@@ -121,6 +121,10 @@ class GameState
     GameState.new items, rooms_without_connections, @current_room, player
   end
 
+  def move_player to_room
+    GameState.new items, rooms, to_room, player
+  end
+
   private
   def replace_room room
     (rooms.select {|r| r.name != room.name}) << room
