@@ -44,7 +44,7 @@ class CommandParser < Parslet::Parser
     spaced(any_of_stri ['into', 'in']) >> the? >>
     item.as(:container)
   }
-  rule(:putword) {any_of_stri PUT_WORDS.map}
+  rule(:putword) {any_of_stri PUT_WORDS}
   rule(:put) {
     spaced(putword).as(:put) >> the? >> item.as(:item) >>
     into.maybe
@@ -79,11 +79,11 @@ def simplify o
   o.to_s.downcase.strip.to_sym
 end
 
+# Translate a parsed command (from CommandParser) into a procedure
+# that takes a GameState and a list of Commands
+# (TODO: also descriptions?) and runs the command, returning
+# a new GameState
 class CommandTranslator < Parslet::Transform
-  # rule(:verb => simple(:x)) {x.to_s.downcase.strip}
-  # rule(:container => simple(:x)) {x.to_s.downcase.strip}
-  # rule(:location => simple(:x)) {x.to_s.downcase.strip}
-  # rule(:item => simple(:x)) {x.to_s.downcase.strip}
   rule(:move => simple(:move), :location=>simple(:_location)) {
     location = simplify _location
 
@@ -139,7 +139,9 @@ class CommandTranslator < Parslet::Transform
     puts items.inspect
 
     Proc.new do |state, commands|
-      state
+      viable_command = commands.find {|c| c.verbs.include? verb.to_s}
+      puts viable_command.inspect
+      viable_command.run_command state
     end
   }
 end
