@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'parslet'
 
 TAKE_WORDS = %w(take grab hold collect) << "pick up"

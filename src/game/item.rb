@@ -1,5 +1,3 @@
-require 'rubygems'
-
 require_relative 'gameobject'
 
 class Item < GameObject

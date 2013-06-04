@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'Docile'
 
 require_relative 'item_builder'

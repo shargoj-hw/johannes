@@ -1,5 +1,3 @@
-require 'rubygems'
-
 require_relative 'gamestate'
 
 # TODO: Add real requirement system
