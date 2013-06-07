@@ -145,10 +145,10 @@ class CommandTranslator < Parslet::Transform
   }
 end
 
-# (String | ParsedCommand) GameState [Command] -> GameState
-def run_command command, state, commands
+# (String | ParsedCommand) GameState [Command] [Description] -> GameState
+def run_command command, state, commands, descriptions
   command = CommandParser.new.parse command if command.is_a? String
   command = CommandTranslator.new.apply(command)
 
-  command[state, commands]
+  command[state, commands, descriptions]
 end
