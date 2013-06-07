@@ -10,6 +10,10 @@ class Room < GameObject
     @connections = connections
   end
 
+  def is_connected? other_room
+    connections.include? other_room
+  end
+
   def add_connections *connections
     Room.new name, items, (connections+@connections).uniq
   end

@@ -1,4 +1,7 @@
 class ItemNotFound < Exception; end
+class RoomNotAdjacent < Exception; end
+class InvalidContainer < Exception; end
+class AttemptedStaticObjectPickup < Exception; end
 
 class GameState
   attr_reader :items, :rooms, :player
@@ -65,8 +68,9 @@ class GameState
     player_with_item = player.add_items item
 
     if !from.nil?
-      if !(self.item from).contains?(item)
-        raise "#{from} doesn't contain #{item}"
+      real_item = self.item from
+      if real_item.nil? || !real_item.contains?(item)
+        raise InvalidContainer
       end
 
       container_less_item = (self.item from).destroy_items item
@@ -74,7 +78,7 @@ class GameState
 
       GameState.new new_items, rooms, @current_room, player_with_item
     elsif current_room.items.include? item
-      raise 'tried to pick up a static object' if (self.item item).is_static?
+      raise AttemptedStaticObjectPickup if (self.item item).is_static?
 
       room_without_item = current_room.destroy_items item
 
@@ -156,6 +160,14 @@ class GameState
   end
 
   def move_player to_room
+    if current_room.is_connected? to_room
+      GameState.new items, rooms, to_room, player
+    else
+      raise RoomNotAdjacent
+    end
+  end
+
+  def force_move_player to_room
     GameState.new items, rooms, to_room, player
   end
 
@@ -166,5 +178,13 @@ class GameState
 
   def replace_item item
     (items.select {|i| i.name != item.name}) << item
+  end
+
+  def _check_item item
+    raise BadItem unless items.any? {|i| i.name == item}
+  end
+
+  def _check_room room
+    raise BadRoom unless rooms.any {|r| r.name == room}
   end
 end

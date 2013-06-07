@@ -9,12 +9,16 @@ class REPL
 
   def run
     while true do
-      print '--> '; cmd = gets
+      print '--> '; cmd = $stdin.gets
       cmd = cmd.slice(0,cmd.length-1)
 
-      @gamestate = run_command cmd, @gamestate, @commands
+      @gamestate, response = run_command(cmd,
+                                         @gamestate,
+                                         @commands,
+                                         @descriptions)
 
       puts @gamestate.inspect
+      puts response
     end
   end
 end

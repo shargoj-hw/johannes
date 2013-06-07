@@ -52,15 +52,18 @@ class App
 
     puts text = direct_message[:text]
 
-    new_gamestate = run_command(text,
-                                gamestate,
-                                @story_data.commands)
-
-    _in_progress_story! sender_id, new_gamestate
+    new_gamestate, message = run_command(text,
+                                         gamestate,
+                                         @story_data.commands,
+                                         @story_data.descriptions)
 
     puts new_gamestate.inspect
+    puts message
 
-    @client.direct_message_create sender_id, "ran #{text}"
+    _in_progress_story! sender_id, new_gamestate
+    puts 'wrote story'
+    @client.direct_message_create sender_id, message
+    puts 'sent message'
   end
 
   def _in_progress_story twitter_id
@@ -77,7 +80,8 @@ class App
   end
 
   def _in_progress_story! twitter_id, gamestate
-    stories.update(_make_in_progress_story(twitter_id, gamestate))
+    stories.update({'twitter_id'=>twitter_id},
+                   _make_in_progress_story(twitter_id, gamestate))
   end
 
   def _make_in_progress_story twitter_id, gamestate
@@ -92,4 +96,4 @@ A = App.new(Twitter::Client.new,
             DB.db('test'),
             LOCKEDIN)
 
-# A.run
+A.run
