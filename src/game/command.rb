@@ -1,5 +1,7 @@
 require_relative 'gamestate'
 
+class CantRun < Exception; end
+
 # TODO: Add real requirement system
 class Command
   attr_reader :verbs, :on_success
@@ -100,6 +102,6 @@ class Command
         gs = GameState.new gs.items, gs.rooms, @moves_player_to, gs.player
     end
 
-    gs
+    [gs, on_success]
   end
 end

@@ -1,5 +1,8 @@
 require 'parslet'
 
+require_relative 'game/commands/all_commands'
+
+DESCRIBE_WORDS = ['look at'].concat %w(look inspect describe see l i)
 TAKE_WORDS = %w(take grab hold collect) << "pick up"
 PUT_WORDS = %w(drop put discard) << "put down"
 MOVE_WORDS = %w(go move walk run exit)
@@ -23,7 +26,6 @@ def spaced thing
   match('\s').repeat >> thing >> match('\s').repeat
 end
 
-# TODO: generate these from items?
 class CommandParser < Parslet::Parser
   rule(:item) {
     match('[A-Za-z_]').repeat(1)
@@ -57,6 +59,12 @@ class CommandParser < Parslet::Parser
     item.as(:location)
   }
 
+  rule(:describe) {
+    spaced(any_of_stri DESCRIBE_WORDS).as(:describe) >>
+    the? >>
+    item.as(:item)
+  }
+
   rule(:with?) {spaced(stri "with").maybe}
   rule(:and?) {spaced(any_of_stri [', and', ',', 'and']).maybe}
   rule(:withitem) {
@@ -68,15 +76,15 @@ class CommandParser < Parslet::Parser
   }
 
   rule(:command) {
-    [move, take, put, sentence].reduce(:|)
+    [move, take, put, describe, sentence].reduce(:|)
   }
 
   root(:command)
 end
 
-# convert to a reasonable symbol for the gamestate
+# homogenize the input data
 def simplify o
-  o.to_s.downcase.strip.to_sym
+  o.to_s.downcase.strip
 end
 
 # Translate a parsed command (from CommandParser) into a procedure
@@ -86,26 +94,14 @@ class CommandTranslator < Parslet::Transform
   rule(:move => simple(:move), :location=>simple(:_location)) {
     location = simplify _location
 
-    lambda do |state, commands, descriptions|
-      begin
-        return state.move_player(location), "I just got to the #{location.to_s}."
-      rescue RoomNotAdjacent
-        return state, "I don't know how to get there from here."
-      end
-    end
+    MovePlayerCommand.new location.to_sym
   }
 
 
   rule(:put => simple(:put), :item => simple(:_item)) {
     item = simplify _item
 
-    lambda do |state, commands, descriptions|
-      begin
-        return state.put(item), "I got rid of it."
-      rescue ItemNotFound
-        return state, "I'm not carrying that."
-      end
-    end
+    PutCommand.new item
   }
 
 
@@ -115,26 +111,14 @@ class CommandTranslator < Parslet::Transform
     item = simplify _item
     container = simplify _container
 
-    lambda do |state, commands, descriptions|
-      begin
-        return state.put(item, container), "There it goes!"
-      rescue ItemNotFound
-        return state, "I'm not carrying that."
-      end
-    end
+    PutCommand.new item, container
   }
 
 
   rule(:take => simple(:take), :item => simple(:_item)) {
     item = simplify _item
 
-    lambda do |state, commands, descriptions|
-      begin
-        return state.take(item), "I grabbed it."
-      rescue ItemNotFound
-        return state, "I can't find one of those"
-      end
-    end
+    TakeCommand.new item
   }
 
 
@@ -144,44 +128,27 @@ class CommandTranslator < Parslet::Transform
     item = simplify _item
     container = simplify _container
 
-    lambda do |state, commands, descriptions|
-      begin
-        return state.take(item, container), "I got it!"
-      rescue ItemNotFound
-        return state, "I couldn't grab that."
-      rescue AttemptedStaticObjectPickup
-        return state, "I can't pick that up."
-      end
-    end
+    TakeCommand.new item, container
   }
 
+  rule(:describe => simple(:describe),
+       :item => simple(:_item)) {
+    item = simplify _item
+
+    DescribeCommand.new item
+  }
 
   rule(:verb => simple(:_verb), :items=>subtree(:_items)) {
     verb = simplify _verb
-    # items = _items.map {|i| simplify i[:item]}
 
-    lambda do |state, commands, descriptions|
-      viable_command = commands.find {|c| c.verbs.include? verb.to_s}
-
-      if viable_command.nil?
-        return state, "I don't know what you mean by that."
-      end
-
-      begin
-        return viable_command.run_command(state), viable_command.on_success
-      rescue
-        return state, "I can't do that for some reason."
-      rescue InvalidContainer
-        return state, "I don't know how to take that from there"
-      end
-    end
+    StoryCommand.new verb
   }
 
 end
 
-# (String | ParsedCommand) GameState [Command] [Description] -> GameState
-def run_command command, state, commands, descriptions
+# (string | command) Story -> [GameState, String]
+def run_command command, story
   command = CommandParser.new.parse command if command.is_a? String
 
-  CommandTranslator.new.apply(command)[state, commands, descriptions]
+  CommandTranslator.new.apply(command).run_command(story)
 end

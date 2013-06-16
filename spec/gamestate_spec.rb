@@ -62,23 +62,17 @@ describe GameState do
     end
   end
 
-  describe '.player_create' do
-  end
+  describe '.player_create'
 
-  describe '.room_create' do
-  end
+  describe '.room_create'
 
-  describe '.container_create' do
-  end
+  describe '.container_create'
 
-  describe '.player_destroy' do
-  end
+  describe '.player_destroy'
 
-  describe '.room_destroy' do
-  end
+  describe '.room_destroy'
 
-  describe '.container_destroy' do
-  end
+  describe '.container_destroy'
 
   describe '.create_connections' do
     context 'when the rooms exist' do

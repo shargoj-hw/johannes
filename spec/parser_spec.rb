@@ -30,6 +30,10 @@ describe CommandParser do
       parser.move.should parse("exit to florida")
       parser.move.should parse("move into the car")
     end
+
+    it 'should parse a describe command' do
+      parser.describe.should parse("describe the chumbucket")
+    end
   end
 
   context 'full sentences' do
@@ -45,4 +49,5 @@ describe CommandParser do
       parser.sentence.should parse("alchemize with the necronomicon and fluffy")
     end
   end
+
 end

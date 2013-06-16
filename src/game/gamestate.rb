@@ -92,6 +92,7 @@ class GameState
 
   def put item, into=nil
     raise ItemNotFound unless player.items.include? item
+    raise InvalidContainer if !into.nil? && !valid_container(into)
 
     real_item = (self.item item)
     player_without_item = player.destroy_items item
@@ -180,11 +181,9 @@ class GameState
     (items.select {|i| i.name != item.name}) << item
   end
 
-  def _check_item item
-    raise BadItem unless items.any? {|i| i.name == item}
-  end
+  def valid_container item
+    item = (self.item item)
 
-  def _check_room room
-    raise BadRoom unless rooms.any {|r| r.name == room}
+    !item.nil? && item.is_container?
   end
 end

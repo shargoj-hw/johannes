@@ -6,10 +6,14 @@ require_relative "command_builder"
 require_relative "item_builder"
 require_relative "room_builder"
 
+require_relative "../game/story"
+
 StoryData = Struct.new(:initial_gamestate,
                        :items,
                        :descriptions,
                        :commands)
+
+
 
 story_build = Proc.new do
   player = @has_player
@@ -19,7 +23,10 @@ story_build = Proc.new do
   initial_rooms = @rooms.map {|roomdata| roomdata.room}
   start_gamestate = GameState.new items, initial_rooms, player.room, player.player
 
-  StoryData.new start_gamestate, items, descs, comms
+  desc_map = Hash.new
+  descs.each {|d| desc_map[d.name] = d}
+
+  Story.new start_gamestate, items, desc_map, comms
 end
 
 StoryBuilder = builder(story_build) do
