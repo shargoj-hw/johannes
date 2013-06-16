@@ -13,41 +13,6 @@ class GameState
     @player = player
   end
 
-  def to_mongo
-    mongo_items = {}
-    items.each{|i| mongo_items[i.name] = i.items}
-
-    mongo_rooms = {}
-    rooms.each{|r| mongo_rooms[r.name] = r.items}
-
-    mongo_player_items = player.items
-
-    {
-      'items' => mongo_items,
-      'rooms' => mongo_rooms,
-      'current_room' => current_room.name,
-      'player_items' => mongo_player_items
-    }
-  end
-
-  def self.from_mongo initial, mongo_data
-    items = initial.items.map {|i|
-      items = (i.is_container? ?
-               (mongo_data['items'][i.name.to_s]) : nil)
-      i.new_with_items items
-    }
-
-    rooms = initial.rooms.map {|r|
-      r.new_with_items(mongo_data['rooms'][r.name.to_s])
-    }
-
-    current_room = mongo_data['current_room']
-
-    player = initial.player.new_with_items mongo_data['player_items']
-
-    GameState.new items, rooms, current_room, player
-  end
-
   def current_room
     room @current_room
   end
