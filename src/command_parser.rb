@@ -143,12 +143,15 @@ class CommandTranslator < Parslet::Transform
 
     StoryCommand.new verb
   }
-
 end
 
 # (string | command) Story -> [GameState, String]
 def run_command command, story
-  command = CommandParser.new.parse command if command.is_a? String
+  begin
+    command = CommandParser.new.parse command if command.is_a? String
+  rescue Parslet::ParseFailed
+    return [story.gamestate, "I don't know what you mean."]
+  end
 
-  CommandTranslator.new.apply(command).run_command(story)
+  return CommandTranslator.new.apply(command).run_command(story)
 end
