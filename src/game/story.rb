@@ -1,12 +1,15 @@
 class Story
-  attr_accessor :gamestate
-  attr_reader :items, :descriptions, :commands
+  attr_reader :gamestate, :items, :descriptions, :commands
 
   def initialize gamestate, items, descriptions, commands
     @gamestate= gamestate
     @items = items
     @descriptions = descriptions
     @commands = commands
+  end
+
+  def with_gamestate gs
+    Story.new gs, items, descriptions, commands
   end
 
   # Find an object in the current room or in the player's inventory

@@ -10,7 +10,9 @@ class REPL
       print '--> '; cmd = $stdin.gets
       cmd = cmd.slice(0,cmd.length-1)
 
-      @story.gamestate, response = run_command(cmd, @story)
+      gs, response = run_command(cmd, @story)
+      @story = @story.with_gamestate gs
+
       puts @story.gamestate.inspect
       puts response
     end

@@ -8,7 +8,6 @@ class StoryCommand < Command
   def run_command story
     state = story.gamestate
 
-    binding.pry
     command = story.commands.find {|c| c.verbs.include? @verb}
 
     begin

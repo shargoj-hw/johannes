@@ -13,11 +13,11 @@ TweetStream.configure(&TWITTER_CONFIG)
 DB = MongoClient.new MONGO_HOST, MONGO_PORT
 
 class App
-  def initialize client, stream_client, database, story_data
+  def initialize client, stream_client, database, story
     @client = client
     @stream_client = stream_client
     @db = database
-    @story_data = story_data
+    @story = story
 
     _setup_twitter!
   end
@@ -44,37 +44,44 @@ class App
   end
 
   def _on_direct_message direct_message
-    sender_id = direct_message[:sender][:id]
-    return if @client.user.id == sender_id
+    begin
+      sender_id = direct_message[:sender][:id]
+      return if @client.user.id == sender_id
 
-    puts 'getting story'
-    gamestate = _in_progress_story sender_id
+      puts 'getting story'
+      story = _in_progress_story sender_id
 
-    puts text = direct_message[:text]
+      puts text = direct_message[:text]
 
-    new_gamestate, message = run_command(text,
-                                         gamestate,
-                                         @story_data.commands,
-                                         @story_data.descriptions)
+      new_gamestate, message = run_command(text, story)
 
-    puts new_gamestate.inspect
-    puts message
+      puts new_gamestate.inspect
+      puts message
 
-    _in_progress_story! sender_id, new_gamestate
-    puts 'wrote story'
-    @client.direct_message_create sender_id, message
-    puts 'sent message'
+      _in_progress_story! sender_id, new_gamestate
+
+      puts 'wrote story'
+      @client.direct_message_create sender_id, message
+      puts 'sent message'
+    rescue Exception => e
+      puts e.inspect
+      puts e.backtrace
+    end
   end
 
   def _in_progress_story twitter_id
     in_progress = stories.find_one('twitter_id' => twitter_id)
-    if in_progress.nil?
-      story = @story_data.initial_gamestate
-      stories.insert(_make_in_progress_story(twitter_id, story))
 
-      story
+    if in_progress.nil?
+      state = @story.gamestate
+      stories.insert(_make_in_progress_story(twitter_id, state))
+
+      @story
     else
-      GameState.from_mongo @story_data.initial_gamestate, in_progress['story']
+      gs = GameState.from_mongo(@story.gamestate,
+                                in_progress['story'])
+
+      @story.with_gamestate gs
     end
 
   end

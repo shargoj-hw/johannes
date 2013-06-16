@@ -32,7 +32,8 @@ class GameState
 
   def self.from_mongo initial, mongo_data
     items = initial.items.map {|i|
-      items = i.is_container? ? (mongo_data['items'][i.name.to_s]) : nil
+      items = (i.is_container? ?
+               (mongo_data['items'][i.name.to_s]) : nil)
       i.new_with_items items
     }
 
@@ -48,7 +49,6 @@ class GameState
   end
 
   def current_room
-    # TODO: should this error out?
     room @current_room
   end
 
