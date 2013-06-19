@@ -1,5 +1,4 @@
-require 'rubygems'
-require "Docile"
+require "docile"
 
 require_relative "builder_builder"
 require_relative "player_builder"
