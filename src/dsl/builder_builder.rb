@@ -1,4 +1,4 @@
-require 'Docile'
+require 'docile'
 
 class BuilderBuilder
   def initialize

@@ -1,4 +1,4 @@
-require 'Docile'
+require 'docile'
 
 require_relative 'item_builder'
 require_relative '../game/command'
