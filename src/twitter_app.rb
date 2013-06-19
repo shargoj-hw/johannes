@@ -67,26 +67,3 @@ class App
     end
   end
 end
-
-require 'twitter'
-require 'tweetstream'
-require 'mongo'; include Mongo
-
-require_relative './twitter_data'
-require_relative './mongo_data'
-
-require_relative './mongo_model'
-
-Twitter.configure(&TWITTER_CONFIG)
-TweetStream.configure(&TWITTER_CONFIG)
-
-DB = MongoClient.new MONGO_HOST, MONGO_PORT
-
-require_relative './story_spec.rb'
-
-A = App.new(Twitter::Client.new,
-            TweetStream::Client.new,
-            MongoModel.new(DB.db('test')),
-            LOCKEDIN)
-
-A.run
