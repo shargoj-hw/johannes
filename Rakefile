@@ -27,11 +27,20 @@ task :run_server do
 
   require_relative 'src/mongo_model'
   require_relative 'src/twitter_app'
-  require_relative 'src/story_spec.rb'; STORY = LOCKEDIN
+  #require_relative 'src/story_spec.rb'; STORY = LOCKEDIN
+  require_relative 'src/wheel_of_life.rb'; STORY = WHEEL
   A = App.new(TwitterFactory.twitter_client,
               TwitterFactory.tweet_stream_client,
               MongoModel.new(DB),
               STORY)
 
   A.run
+end
+
+desc "Run a local REPL"
+task :repl do
+  require_relative 'src/repl'
+  require_relative 'src/wheel_of_life.rb'; STORY = WHEEL
+
+  REPL.new(STORY).run
 end
