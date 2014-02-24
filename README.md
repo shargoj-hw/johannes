@@ -1,4 +1,4 @@
 johannes
 ========
 
-Game engine for Twitter text adventures. Created as a course project in Creative Writing.
+Game engine for Twitter text adventures. Created as a Creative Writing course project.
